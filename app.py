@@ -6,7 +6,8 @@ import io
 
 app = Flask(__name__)
 
-CSV_PATH = os.path.join(os.path.dirname(__file__), "master_list.csv")
+#CSV_PATH = os.path.join(os.path.dirname(__file__), "master_list.csv")
+EXCEL_PATH = os.path.join(os.path.dirname(__file__), r"G:\Shared drives\Operations Shared Drive\Operations\Amul Installation\MASTER LIST -  13 LOTS.xlsx")
 
 HIDDEN_COLUMNS = [
     "Request Date", "DCS Samati", "Samati Date",
@@ -15,7 +16,8 @@ HIDDEN_COLUMNS = [
 ]
 
 def load_data():
-    df = pd.read_csv(CSV_PATH, dtype=str)
+    #df = pd.read_csv(CSV_PATH, dtype=str)
+    df = pd.read_excel(EXCEL_PATH, dtype=str, engine="openpyxl")
     df.columns = [c.strip() for c in df.columns]
     df = df.fillna("")
     return df
@@ -59,7 +61,7 @@ def index():
     farm_statuses         = sorted(df["FARM STATUS"].unique().tolist())
 
     s = compute_stats(df)
-    total_records     = s["total_records"]
+    total_devices     = s["total_devices"]
     installed_devices = s["installed_devices"]
     removed_devices   = s["removed_devices"]
     installed_farms   = s["installed_farms"]
@@ -71,7 +73,7 @@ def index():
         lots=lots,
         installation_statuses=installation_statuses,
         farm_statuses=farm_statuses,
-        total_records=total_records,
+        total_devices=total_devices,
         installed_devices=installed_devices,
         removed_devices=removed_devices,
         installed_farms=installed_farms,
@@ -80,13 +82,55 @@ def index():
 
 def compute_stats(df):
     df_num = df.copy()
-    df_num["Belt Demand in Samati - Revised"] = pd.to_numeric(df_num["Belt Demand in Samati - Revised"], errors="coerce").fillna(0)
-    df_num["Cancelled Devices"] = pd.to_numeric(df_num["Cancelled Devices"], errors="coerce").fillna(0)
+
+    # Convert numeric columns safely
+    df_num["Belt Demand in Samati - Revised"] = pd.to_numeric(
+        df_num["Belt Demand in Samati - Revised"], errors="coerce"
+    ).fillna(0)
+
+    df_num["Cancelled Devices"] = pd.to_numeric(
+        df_num["Cancelled Devices"], errors="coerce"
+    ).fillna(0)
+
+    # --- Core metrics ---
+    total_devices = df_num["Belt Demand in Samati - Revised"].sum()
+
+    installed_devices = df_num.loc[
+        df_num["Installation Status"] == "INSTALLED",
+        "Belt Demand in Samati - Revised"
+    ].sum()
+
+    removed_devices = df_num.loc[
+        df_num["FARM STATUS"] == "REMOVED",
+        "Cancelled Devices"
+    ].sum()
+
+    cancelled_devices = df_num.loc[
+        df_num["Installation Status"] == "ORDER CANCELLED",
+        "Belt Demand in Samati - Revised"
+    ].sum()
+
+    duplicate_devices = df_num.loc[
+        df_num["Installation Status"] == "DUPLICATE",
+        "Belt Demand in Samati - Revised"
+    ].sum()
+    # --- Pending logic (your formula) ---
+    pending_devices = df_num.loc[
+        df_num["Installation Status"] == "PENDING",
+        "Belt Demand in Samati - Revised"
+    ].sum()
+
+    # Prevent negative values (data safety)
+    #pending_devices = max(0, pending_devices)
+
     return {
-        "total_records":     len(df),
-        "installed_devices": int(df_num.loc[df_num["Installation Status"] == "INSTALLED", "Belt Demand in Samati - Revised"].sum()),
-        "removed_devices":   int(df_num.loc[df_num["FARM STATUS"] == "REMOVED", "Cancelled Devices"].sum()),
-        "installed_farms":   int((df["FARM STATUS"].isin(["ACTIVE", "INSTALLED"])).sum()),
+        "total_devices": int(total_devices),
+        "installed_devices": int(installed_devices),
+        "removed_devices": int(removed_devices),
+        "cancelled_devices": int(cancelled_devices),
+        "duplicate_devices": int(duplicate_devices),
+        "pending_devices": int(pending_devices),
+        "installed_farms": int((df["FARM STATUS"].isin(["ACTIVE", "INSTALLED"])).sum()),
     }
 
 @app.route("/api/data")
