@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Master List — 12 Lots</title>
+  <title>Amul Installation Dashboard</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -156,8 +156,8 @@
 <body>
 
 <header>
-  <h1>📋 Master List — 12 Lots</h1>
-  <p>Farmer installation tracker · {{ total_records }} total records</p>
+  <h1>📋 Amul Installation Dashboard</h1>
+  <p>Amul installation tracker · {{ total_devices }} Total Devices</p>
 </header>
 
 <div class="container">
@@ -166,23 +166,32 @@
   <div class="stats-bar">
     <div class="stat-card blue">
       <div class="label">Total Devices</div>
-      <div class="value" id="stat-total">{{ total_devices }}</div>
+      <div class="value" id="stat-total-devices">—</div>
     </div>
+
     <div class="stat-card green">
       <div class="label">Installed Devices</div>
-      <div class="value" id="stat-installed-devices">{{ installed_devices }}</div>
+      <div class="value" id="stat-installed-devices">—</div>
     </div>
+
+    <div class="stat-card purple">
+      <div class="label">Pending Devices</div>
+      <div class="value" id="stat-pending-devices">—</div>
+    </div>
+
+    <div class="stat-card red">
+      <div class="label">Cancelled Devices</div>
+      <div class="value" id="stat-cancelled-devices">—</div>
+    </div>
+
+    <div class="stat-card gray">
+      <div class="label">Duplicate Devices</div>
+      <div class="value" id="stat-duplicate-devices">—</div>
+    </div>
+
     <div class="stat-card red">
       <div class="label">Removed Devices</div>
-      <div class="value" id="stat-removed-devices">{{ removed_devices }}</div>
-    </div>
-    <div class="stat-card purple">
-      <div class="label">Installed Farms</div>
-      <div class="value" id="stat-installed-farms">{{ installed_farms }}</div>
-    </div>
-    <div class="stat-card gray">
-      <div class="label">Filtered Results</div>
-      <div class="value" id="stat-filtered">—</div>
+      <div class="value" id="stat-removed-devices">—</div>
     </div>
   </div>
 
@@ -345,11 +354,23 @@
     const to   = Math.min(data.page*data.per_page, data.total);
     document.getElementById("result-count").textContent =
       data.total ? `Showing ${from}–${to} of ${data.total} records` : "No records found";
-    document.getElementById("stat-filtered").textContent        = data.total;
-    document.getElementById("stat-total").textContent            = data.stats.total_devices;
-    document.getElementById("stat-installed-devices").textContent = data.stats.installed_devices;
-    document.getElementById("stat-removed-devices").textContent   = data.stats.removed_devices;
-    document.getElementById("stat-installed-farms").textContent   = data.stats.installed_farms;
+    document.getElementById("stat-total-devices").textContent =
+  data.stats.total_devices;
+
+document.getElementById("stat-installed-devices").textContent =
+  data.stats.installed_devices;
+
+document.getElementById("stat-pending-devices").textContent =
+  data.stats.pending_devices;
+
+document.getElementById("stat-cancelled-devices").textContent =
+  data.stats.cancelled_devices;
+
+document.getElementById("stat-duplicate-devices").textContent =
+  data.stats.duplicate_devices;
+
+document.getElementById("stat-removed-devices").textContent =
+  data.stats.removed_devices;
   }
 
   function goToPage(p) { state.page = p; fetchData(); }
