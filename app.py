@@ -6,8 +6,9 @@ import io
 
 app = Flask(__name__)
 
-#CSV_PATH = os.path.join(os.path.dirname(__file__), "master_list.csv")
-EXCEL_PATH = os.path.join(os.path.dirname(__file__), r"G:\Shared drives\Operations Shared Drive\Operations\Amul Installation\MASTER LIST -  13 LOTS.xlsx")
+SHEET_ID  = "12gl_Ci2m_SQIBxlm-Z-KxniSKatgHqqq"
+SHEET_GID = "753760495"
+SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={SHEET_GID}"
 
 HIDDEN_COLUMNS = [
     "Request Date", "DCS Samati", "Samati Date",
@@ -15,12 +16,19 @@ HIDDEN_COLUMNS = [
     "Latitude", "Longitude"
 ]
 
+# Simple in-memory cache — avoids hitting Google on every request
+_cache = {"df": None, "ts": 0}
+CACHE_TTL = 300  # 5 minutes
+
 def load_data():
-    #df = pd.read_csv(CSV_PATH, dtype=str)
-    df = pd.read_excel(EXCEL_PATH, dtype=str, engine="openpyxl")
-    df.columns = [c.strip() for c in df.columns]
-    df = df.fillna("")
-    return df
+    now = time.time()
+    if _cache["df"] is None or (now - _cache["ts"]) > CACHE_TTL:
+        df = pd.read_csv(SHEET_URL, dtype=str)
+        df.columns = [c.strip() for c in df.columns]
+        df = df.fillna("")
+        _cache["df"] = df
+        _cache["ts"] = now
+    return _cache["df"].copy()
 
 def apply_filters(df, args):
     search               = args.get("search", "").strip().lower()
