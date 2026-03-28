@@ -60,7 +60,6 @@ def index():
 
     s = compute_stats(df)
     total_records     = s["total_records"]
-    total_devices     = s["total_devices"]
     installed_devices = s["installed_devices"]
     removed_devices   = s["removed_devices"]
     installed_farms   = s["installed_farms"]
@@ -73,7 +72,6 @@ def index():
         installation_statuses=installation_statuses,
         farm_statuses=farm_statuses,
         total_records=total_records,
-        total_devices=total_devices,
         installed_devices=installed_devices,
         removed_devices=removed_devices,
         installed_farms=installed_farms,
@@ -86,7 +84,6 @@ def compute_stats(df):
     df_num["Cancelled Devices"] = pd.to_numeric(df_num["Cancelled Devices"], errors="coerce").fillna(0)
     return {
         "total_records":     len(df),
-        "total_devices":     int(df_num["Belt Demand in Samati - Revised"].sum()),
         "installed_devices": int(df_num.loc[df_num["Installation Status"] == "INSTALLED", "Belt Demand in Samati - Revised"].sum()),
         "removed_devices":   int(df_num.loc[df_num["FARM STATUS"] == "REMOVED", "Cancelled Devices"].sum()),
         "installed_farms":   int((df["FARM STATUS"].isin(["ACTIVE", "INSTALLED"])).sum()),
