@@ -47,14 +47,23 @@ def apply_filters(df, args):
     if farm_status:
         df = df[df["FARM STATUS"] == farm_status]
 
-    if installed_from:
-        df = df[df["Installed Date"] >= installed_from]
-    if installed_to:
-        df = df[df["Installed Date"] <= installed_to]
+    if installed_from or installed_to or cancelled_before:
+        # "Installed Date" is stored as M/D/YYYY; convert to datetime for proper comparison
+        df["_installed_dt"] = pd.to_datetime(df["Installed Date"], errors="coerce")
 
-    # Show farms installed BEFORE the selected cancellation date
-    if cancelled_before:
-        df = df[(df["Installed Date"] != "") & (df["Installed Date"] < cancelled_before)]
+        if installed_from:
+            from_dt = pd.to_datetime(installed_from, errors="coerce")
+            df = df[df["_installed_dt"] >= from_dt]
+        if installed_to:
+            to_dt = pd.to_datetime(installed_to, errors="coerce")
+            df = df[df["_installed_dt"] <= to_dt]
+
+        # Show farms installed BEFORE the selected cancellation date
+        if cancelled_before:
+            cb_dt = pd.to_datetime(cancelled_before, errors="coerce")
+            df = df[df["_installed_dt"].notna() & (df["_installed_dt"] < cb_dt)]
+
+        df = df.drop(columns=["_installed_dt"])
 
     if search:
         mask = df.apply(lambda row: row.astype(str).str.lower().str.contains(search, na=False).any(), axis=1)
