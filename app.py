@@ -40,13 +40,7 @@ def apply_filters(df, args):
     installed_to         = args.get("installed_to", "")
     cancelled_before     = args.get("cancelled_before", "")
 
-    if lot:
-        df = df[df["Lot"] == lot]
-    if installation_status:
-        df = df[df["Installation Status"] == installation_status]
-    if farm_status:
-        df = df[df["FARM STATUS"] == farm_status]
-
+    
     if installed_from or installed_to or cancelled_before:
         # "Installed Date" is stored as M/D/YYYY; convert to datetime for proper comparison
         df["_installed_dt"] = pd.to_datetime(df["Installed Date"], errors="coerce")
@@ -64,6 +58,13 @@ def apply_filters(df, args):
             df = df[df["_installed_dt"].notna() & (df["_installed_dt"] < cb_dt)]
 
         df = df.drop(columns=["_installed_dt"])
+        
+    if lot:
+        df = df[df["Lot"] == lot]
+    if installation_status:
+        df = df[df["Installation Status"] == installation_status]
+    if farm_status:
+        df = df[df["FARM STATUS"] == farm_status]
 
     if search:
         mask = df.apply(lambda row: row.astype(str).str.lower().str.contains(search, na=False).any(), axis=1)
