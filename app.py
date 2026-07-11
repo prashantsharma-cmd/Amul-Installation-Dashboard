@@ -8,7 +8,7 @@ import time
 app = Flask(__name__)
 
 SHEET_ID  = "12gl_Ci2m_SQIBxlm-Z-KxniSKatgHqqq"
-SHEET_GID = "753760495"
+SHEET_GID = "1679571976"
 SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={SHEET_GID}"
 
 HIDDEN_COLUMNS = [
