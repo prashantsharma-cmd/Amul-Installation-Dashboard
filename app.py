@@ -190,12 +190,29 @@ def api_download():
         df = df.sort_values(by=sort_col, ascending=(sort_dir == "asc"))
 
     visible = [c for c in df.columns if c not in HIDDEN_COLUMNS]
-    df = df[visible]
+    df = df[visible].copy()
+
+    # --- Fix column types for Excel export ---
+    for col in ["Belt Demand in Samati - Revised", "Cancelled Devices"]:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
+
+    if "Cancellation Date" in df.columns:
+        df["Cancellation Date"] = pd.to_datetime(
+            df["Cancellation Date"], errors="coerce", dayfirst=True
+        )
 
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name="Master")
         ws = writer.sheets["Master"]
+
+        # Apply DD/MM/YYYY display format to the date column
+        if "Cancellation Date" in df.columns:
+            date_col_idx = df.columns.get_loc("Cancellation Date") + 1  # openpyxl is 1-indexed
+            for row in range(2, ws.max_row + 1):
+                ws.cell(row=row, column=date_col_idx).number_format = "DD/MM/YYYY"
+
         for col_cells in ws.columns:
             max_len = max((len(str(cell.value or "")) for cell in col_cells), default=10)
             ws.column_dimensions[col_cells[0].column_letter].width = min(max_len + 4, 40)
